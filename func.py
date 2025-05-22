@@ -20,7 +20,40 @@ if response.status_code == 200:
 else:
     print("Ошибка:", response.status_code)
 
-        # Собираем все occupation
+filtered_heroes = []
+for hero in heroes:
+    if hero["appearance"]["gender"].lower() != gender.lower():
+        continue
+    
+    occupation = hero["work"]["occupation"].lower()
+
+    if occupation in ["-", "none", "unemployed", ""]:
+        employment_status = "no"
+    else:
+        employment_status = "yes"
+
+    if employment_status != job:
+        continue
+    
+    height_data = hero["appearance"]["height"]
+    if isinstance(height_data, list) and len(height_data) >= 2:
+        height_str = height_data[1]
+        
+        if "cm" in height_str:
+            height_cm = float(height_str.replace("cm", "").strip())
+        elif "meters" in height_str:
+            height_cm = float(height_str.replace("meters", "").strip()) * 100
+        else:
+            continue
+        filtered_heroes.append((height_cm, hero))
+
+
+# проверка наличия работы
+# обработка роста (если cm, то просто удаление cm, если meters, то перевод в cm и удаление ед.изм.)
+# перебор по росту в новую переменную (тоже цикл)
+
+# вывод результата
+
 
 occupations = set()
     
@@ -37,11 +70,7 @@ for hero in heroes:
             if sub_job.strip():
                 occupations.add(sub_job.strip())
     
-    # Возвращаем отсортированный список
-#print(occupations)
-
-# Собираем все единицы измерения роста
-
+    
 
 # Собираем единицы измерения из второго элемента массива height
 units = []
