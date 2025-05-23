@@ -1,74 +1,66 @@
 import requests
-from collections import Counter
 
-'''план
-1. принимаем пол
-2. принимаем работу
-3. отсеиваем по работе
-4. отсеиваем самого высокого
-5. далее возвращаем самого высокого'''
-
-url = "https://akabab.github.io/superhero-api/api/all.json"
-response = requests.get(url)
-
-gender = 'female'
-job = 'yes'
-
-if response.status_code == 200:
-    heroes = response.json()
-    print(f"Всего героев: {len(heroes)}")
-else:
-    print("Ошибка:", response.status_code)
-
-height = 0
-result_hero = 'a'
-
-for hero in heroes:
-    if hero["appearance"]["gender"].lower() != gender.lower():
-        continue
+# Функция поиска самого высокого героя 
+def tallest_hero(gender: str, job: str):
     
-    occupation = hero["work"]["occupation"].lower()
+    # Проверка корректности запроса
+    if gender not in ['male', 'female'] or job not in ['yes', 'no']:
+        print('Неверный запрос. Попробуйте снова.')
+        return
 
-    if occupation in ["-", "none", "unemployed", ""]:
-        employment_status = 'no'
+    # Запрос к api
+    url = "https://akabab.github.io/superhero-api/api/all.json"
+    response = requests.get(url)
+
+    # проверка статус кода
+    if response.status_code == 200:
+        heroes = response.json()
     else:
-        employment_status = 'yes'
+        print("Ошибка:", response.status_code)
 
-    if employment_status != job:
-        continue
-    
-    height_data = hero["appearance"]["height"]
-    if isinstance(height_data, list) and len(height_data) >= 2:
-        height_str = height_data[1]
+    # Объявление двух переменных: для максимального роста и для конечного героя
+    max_height = None
+    result_hero = None
+
+    # Конвертация yes/no в булевое значение
+    has_job = job.lower() == 'yes'
+
+    # Обработка параметров всех героев
+    for hero in heroes:
+        # Проверка пола героя
+        if hero["appearance"]["gender"].lower() != gender.lower():
+            continue
         
-        if "cm" in height_str:
-            height_cm = float(height_str.replace("cm", "").strip())
-            if height_cm > height:
-                height = height_cm
-                result_hero = hero
-                continue 
-        elif "meters" in height_str:
-            height_cm = float(height_str.replace("meters", "").strip()) * 100
-            if height_cm > height:
-                height = height_cm
+        # Проверка наличия работы у героя
+        occupation = hero["work"]["occupation"].lower()
+        employment_status = occupation not in ["-", "none", "unemployed", ""]
+        
+        if employment_status != has_job:
+            continue
+        
+        # Обработка роста героя 
+        height_data = hero["appearance"]["height"]
+        if isinstance(height_data, list) and len(height_data) >= 2:
+            height_str = height_data[1]
+            
+            # Если рост в сантиметрах
+            if "cm" in height_str:
+                height_cm = float(height_str.replace("cm", "").strip())
+            
+            # Если рост в метрах
+            elif "meters" in height_str:
+                height_cm = float(height_str.replace("meters", "").strip()) * 100
+            else:
+                continue
+
+            if max_height is None or height_cm > max_height:
+                max_height = height_cm
                 result_hero = hero
                 continue
-        else:
-            continue
-print(f'конечный герой {result_hero}')
 
+    print(f'Самый высокий супергерой: {result_hero["name"]}. Рост супергероя: {result_hero["appearance"]["height"][1]}.')
 
-# проверка наличия работы
-# обработка роста (если cm, то просто удаление cm, если meters, то перевод в cm и удаление ед.изм.)
-# перебор по росту в новую переменную (тоже цикл)
-
-# вывод результата
-
-
-
-    
-    
-
-
-
-
+if __name__ == "__main__":
+    gender = input("Введите пол супергероя (male/female): ")  
+    job = input("У супергероя есть работа? (yes/no): ")
+    tallest_hero(gender, job)
